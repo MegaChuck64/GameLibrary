@@ -48,7 +48,7 @@ app.post("/new-entry",
 		(
 			{
 				title:request.body.title,
-				content:request.body.body,
+				body:request.body.body,
 				published:new Date()
 			}
 		);
