@@ -3,8 +3,8 @@ var path = require('path');
 var express = require('express');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
-
-
+var MongoClient = require('mongodb').MongoClient;
+var url = "mongodb://localhost:27017/";
 
 
 var app = express();
@@ -24,7 +24,24 @@ app.use(bodyParser.urlencoded({extended:false}));
 app.get("/", 
 	function(request, response)
 	{
-		response.render("index");
+		MongoClient.connect(url,
+			function(err, db)
+			{
+				if (err) throw err;
+				var dbObj = db.db("games");
+				
+				dbObj.collection("games").find().toArray(
+					function(err, results)
+					{
+						console.log("Site Served");
+						db.close();
+						response.render("index", {games:results});
+					}
+				);
+				
+			}
+		);
+		
 	}
 );
 
@@ -44,7 +61,26 @@ app.post("/new-entry",
 			return;
 		}
 		
-		entries.push
+		
+		MongoClient.connect(url,
+			function(err, db)
+			{
+				if (err) throw err;
+				
+				var dbObj = db.db("games");
+				
+				dbObj.collection("games").save(request.body, 
+					function(err, result)
+					{
+						console.log("data saved");
+						db.close();
+						response.redirect("/");
+					}
+				);
+			}
+		);
+		
+/* 		entries.push
 		(
 			{
 				title:request.body.title,
@@ -53,7 +89,7 @@ app.post("/new-entry",
 			}
 		);
 		
-		response.redirect("/");
+		response.redirect("/"); */
 	}
 );
 
