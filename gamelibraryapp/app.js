@@ -61,17 +61,54 @@ passport.use(new LocalStrategy(
 
 	function(username, password, done)
 	{
-		var user = 
-		{
-			username: username,
-			password: password
-		};
-
-		done(null, user);
+		MongoClient.connect(url, 
+			function(err, db)
+			{
+				if (err) throw err;
+				
+				var dbObj = db.db("users");
+				
+				dbObj.collection("users").findOne({username:username}, 
+					function(err, results)
+					{
+						if(results.password === password)
+						{
+							var user = results;
+							done(null, user);
+						}
+						else
+						{
+							done(null, false, {message:'Bad Password'});
+						}
+					}
+				)
+			}
+		)
 	}
 ));
 
-app.get("/", 
+function ensureAuthenticated(req, res, next)
+{
+	if(req.isAuthenticated())
+	{
+		next();
+	}
+	else
+	{
+		res.redirect("/sign-in");
+	}
+}
+
+app.get('/logout', 
+	function(req, res)
+	{
+		req.logout();
+		res.redirect("/sign-in");
+	}
+);
+
+
+app.get("/", ensureAuthenticated, 
 	function(request, response)
 	{
 		MongoClient.connect(url,
@@ -95,7 +132,7 @@ app.get("/",
 	}
 );
 
-app.get("/new-entry", 
+app.get("/new-entry", ensureAuthenticated,
 	function(request, response)
 	{
 		response.render("new-entry");
@@ -189,13 +226,13 @@ app.post("/sign-up",
 );
 
 
-app.post("/sign-in",passport.authenticate('local', 
+app.post('/sign-in',passport.authenticate('local', 
 		{
-			failureRedirect:'/'
+			failureRedirect:'/sign-in'
 		}),
 	function(request,response)
 	{
-		response.redirect('/profile');
+		response.redirect('/');
 	}
 );
 
