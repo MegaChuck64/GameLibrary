@@ -215,7 +215,7 @@ app.post("/sign-up",
 						request.login(request.body,
 							function()
 							{
-								response.redirect('/profile');
+								response.redirect('/');
 							}
 						);
 					}
